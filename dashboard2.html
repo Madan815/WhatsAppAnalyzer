@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Seller Dashboard - Chart.js</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Bootstrap for table and modal styling -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Bootstrap Icons for stars -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <style>
+    body {
+      background: #ebeff0;
+      color: #484f52;
+      font-family: 'Segoe UI', Arial, sans-serif;
+    }
+    .dashboard-container {
+      max-width: 1200px;
+      margin: 40px auto;
+      padding: 24px;
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 4px 24px rgba(104,170,191,0.12);
+    }
+    .profile-card {
+      background: #ebeff0;
+      border: 2px solid #69aabf;
+      border-radius: 14px;
+      padding: 24px;
+      margin-bottom: 32px;
+    }
+    .profile-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .profile-photo {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid #5ead57;
+      background: #fff;
+    }
+    .profile-title-rank {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .profile-rank {
+      font-weight: bold;
+      color: #484f52;
+      font-size: 1.1rem;
+    }
+    .star-rating {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      font-size: 1.3rem;
+      color: #ffc107;
+      margin-left: 6px;
+    }
+    .mini-chart {
+      width: 120px !important;
+      height: 120px !important;
+      display: block;
+      margin: 0 auto;
+    }
+    .wide-chart {
+      width: 100% !important;
+      max-width: 420px !important;
+      height: 180px !important;
+      display: block;
+      margin: 0 auto;
+    }
+    .table-hover tbody tr:hover {
+      background-color: #d6eaf2;
+      cursor: pointer;
+    }
+    .seller-name {
+      color: #69aabf;
+      font-weight: bold;
+      cursor: pointer;
+      text-decoration: underline;
+      transition: color 0.2s;
+    }
+    .seller-name:hover {
+      color: #5ead57;
+    }
+    .chart-section {
+      margin-bottom: 32px;
+    }
+    .modal-header {
+      background: #69aabf;
+      color: #fff;
+    }
+    .modal-content {
+      border-radius: 16px;
+    }
+    .modal-title {
+      font-weight: bold;
+      color: #fff;
+    }
+    .modal-profile-photo {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #5ead57;
+      background: #fff;
+      margin-right: 12px;
+    }
+    .bg-primary-custom {
+      background-color: #69aabf !important;
+    }
+    .text-primary-custom {
+      color: #69aabf !important;
+    }
+    .text-accent-custom {
+      color: #5ead57 !important;
+    }
+    .kpi-card {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(104,170,191,0.10);
+  padding: 22px 0;
+  text-align: center;
+  cursor: pointer;
+  border: 2px solid #ebeff0;
+  transition: box-shadow 0.2s, border-color 0.2s;
+  user-select: none;
+}
+.kpi-card:hover {
+  box-shadow: 0 6px 24px rgba(104,170,191,0.18);
+  border-color: #69aabf;
+}
+.kpi-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.kpi-value {
+  font-size: 2.2rem;
+  font-weight: bold;
+}
+.kpi-interested { border-left: 8px solid #5ead57; }
+.kpi-not-interested { border-left: 8px solid #484f52; }
+.kpi-neutral { border-left: 8px solid #69aabf; }
+
+  </style>
+</head>
+<body>
+  <div class="dashboard-container">
+    <h1 class="mb-4 text-primary-custom">Seller Dashboard</h1>
+
+    <!-- KPI Cards Row -->
+<div class="row mb-4" id="kpi-row">
+  <div class="col-md-4 mb-2">
+    <div class="kpi-card kpi-interested" data-kpi="interested">
+      <div class="kpi-title">Interested</div>
+      <div class="kpi-value">30</div>
+    </div>
+  </div>
+  <div class="col-md-4 mb-2">
+    <div class="kpi-card kpi-not-interested" data-kpi="not_interested">
+      <div class="kpi-title">Not Interested</div>
+      <div class="kpi-value">17</div>
+    </div>
+  </div>
+  <div class="col-md-4 mb-2">
+    <div class="kpi-card kpi-neutral" data-kpi="neutral">
+      <div class="kpi-title">Neutral</div>
+      <div class="kpi-value">3</div>
+    </div>
+  </div>
+</div>
+
+<!-- KPI Modal -->
+<div class="modal fade" id="kpiModal" tabindex="-1" aria-labelledby="kpiModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="kpiModalLabel"></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="kpiModalBody">
+        <!-- Names and contacts will be inserted here -->
+      </div>
+    </div>
+  </div>
+</div>
+
+
+    <!-- Aayush Profile Section -->
+    <div class="profile-card">
+      <div class="profile-header">
+        <img src="https://randomuser.me/api/portraits/men/75.jpg" alt="Aayush" class="profile-photo">
+        <div class="profile-title-rank">
+          <h3 style="margin:0;">Aayush's Profile</h3>
+          <span class="profile-rank">| #432</span>
+          <span class="star-rating">
+            <i class="bi bi-star-fill"></i>
+            <i class="bi bi-star-fill"></i>
+            <i class="bi bi-star-fill"></i>
+            <i class="bi bi-star-half"></i>
+            <i class="bi bi-star"></i>
+            <span style="font-size:1rem; color:#484f52; margin-left:4px;">(3.5)</span>
+          </span>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-3">
+          <p><b>Total Products Sold:</b> <span id="aayush-total"></span></p>
+          <p><b>Total Customers Targeted:</b> <span id="aayush-customers"></span></p>
+        </div>
+        <div class="col-md-3">
+          <canvas id="aayush-product-chart" class="mini-chart"></canvas>
+          <div class="text-center">Product Distribution</div>
+        </div>
+        <div class="col-md-3">
+          <canvas id="aayush-age-chart" class="wide-chart"></canvas>
+          <div class="text-center">Age Group</div>
+        </div>
+        <div class="col-md-3">
+          <canvas id="aayush-region-chart" class="mini-chart"></canvas>
+          <div class="text-center">Region</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top Sellers Table -->
+    <div class="chart-section">
+      <h4 class="text-primary-custom">Top 20 Sellers by Sales</h4>
+      <table class="table table-hover align-middle" id="sellers-table">
+        <thead>
+          <tr style="background:#69aabf; color:#fff;">
+            <th>#</th>
+            <th>Seller Name</th>
+            <th>Total Sales</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Rows inserted by JS -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Seller Profile Modal -->
+  <div class="modal fade" id="sellerModal" tabindex="-1" aria-labelledby="sellerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <img src="" alt="" class="modal-profile-photo" id="modal-profile-photo">
+          <div>
+            <h5 class="modal-title" id="sellerModalLabel"></h5>
+            <div id="modal-rating-stars" class="star-rating"></div>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row mb-3">
+            <div class="col-md-4">
+              <p><b>Total Products Sold:</b> <span id="modal-total"></span></p>
+              <p><b>Total Customers Targeted:</b> <span id="modal-customers"></span></p>
+            </div>
+            <div class="col-md-4">
+              <canvas id="modal-product-chart" class="mini-chart"></canvas>
+              <div class="text-center">Product Distribution</div>
+            </div>
+            <div class="col-md-4">
+              <canvas id="modal-region-chart" class="mini-chart"></canvas>
+              <div class="text-center">Region</div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-12">
+              <canvas id="modal-age-chart" class="wide-chart"></canvas>
+              <div class="text-center">Age Group</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Indian names and profile photos for sellers
+    const indianSellers = [
+      {name: "Aarav", photo: "https://randomuser.me/api/portraits/men/1.jpg"},
+      {name: "Priya", photo: "https://randomuser.me/api/portraits/women/2.jpg"},
+      {name: "Rohan", photo: "https://randomuser.me/api/portraits/men/3.jpg"},
+      {name: "Neha", photo: "https://randomuser.me/api/portraits/women/4.jpg"},
+      {name: "Aditya", photo: "https://randomuser.me/api/portraits/men/5.jpg"},
+      {name: "Kavya", photo: "https://randomuser.me/api/portraits/women/6.jpg"},
+      {name: "Siddharth", photo: "https://randomuser.me/api/portraits/men/7.jpg"},
+      {name: "Ananya", photo: "https://randomuser.me/api/portraits/women/8.jpg"},
+      {name: "Vivaan", photo: "https://randomuser.me/api/portraits/men/9.jpg"},
+      {name: "Isha", photo: "https://randomuser.me/api/portraits/women/10.jpg"},
+      {name: "Arjun", photo: "https://randomuser.me/api/portraits/men/11.jpg"},
+      {name: "Diya", photo: "https://randomuser.me/api/portraits/women/12.jpg"},
+      {name: "Kabir", photo: "https://randomuser.me/api/portraits/men/13.jpg"},
+      {name: "Meera", photo: "https://randomuser.me/api/portraits/women/14.jpg"},
+      {name: "Yash", photo: "https://randomuser.me/api/portraits/men/15.jpg"},
+      {name: "Saanvi", photo: "https://randomuser.me/api/portraits/women/16.jpg"},
+      {name: "Aryan", photo: "https://randomuser.me/api/portraits/men/17.jpg"},
+      {name: "Tara", photo: "https://randomuser.me/api/portraits/women/18.jpg"},
+      {name: "Krishna", photo: "https://randomuser.me/api/portraits/men/19.jpg"},
+      {name: "Riya", photo: "https://randomuser.me/api/portraits/women/20.jpg"}
+    ];
+
+    const productTypes = ["Credit Card", "Debit Card", "Savings Account", "Demat Account"];
+    const ageGroups = ["18-25", "26-35", "36-45", "46+"];
+    const regions = ["North", "South", "East", "West"];
+
+    // Generate random sellers data
+    function randomDist(keys, total) {
+      let vals = Array(keys.length).fill(0).map(() => Math.random());
+      let sum = vals.reduce((a, b) => a + b, 0);
+      vals = vals.map(v => Math.round(v / sum * total));
+      let diff = total - vals.reduce((a, b) => a + b, 0);
+      vals[0] += diff;
+      return Object.fromEntries(keys.map((k, i) => [k, vals[i]]));
+    }
+
+    // Helper to render stars
+    function renderStars(elementId, rating) {
+      const fullStars = Math.floor(rating);
+      const halfStar = rating - fullStars >= 0.5 ? 1 : 0;
+      const emptyStars = 5 - fullStars - halfStar;
+      let starsHtml = '';
+      for (let i = 0; i < fullStars; i++) starsHtml += '<i class="bi bi-star-fill"></i>';
+      if (halfStar) starsHtml += '<i class="bi bi-star-half"></i>';
+      for (let i = 0; i < emptyStars; i++) starsHtml += '<i class="bi bi-star"></i>';
+      starsHtml += `<span style="font-size:1rem; color:#484f52; margin-left:4px;">(${rating})</span>`;
+      document.getElementById(elementId).innerHTML = starsHtml;
+    }
+
+    const sellers = [];
+    for (let i = 0; i < 20; i++) {
+      const totalSales = Math.floor(Math.random() * 200 + 100);
+      const totalCustomers = Math.floor(totalSales * (1 + Math.random() * 0.5));
+      const avgRating = (Math.random() * 2 + 3).toFixed(1); // 3.0 to 5.0
+      sellers.push({
+        name: indianSellers[i].name,
+        photo: indianSellers[i].photo,
+        totalProductsSold: totalSales,
+        salesDistribution: randomDist(productTypes, totalSales),
+        customersTargeted: totalCustomers,
+        ageGroupDistribution: randomDist(ageGroups, totalSales),
+        regionDistribution: randomDist(regions, totalSales),
+        averageRating: avgRating
+      });
+    }
+
+    const aayush = {
+      name: "Aayush",
+      photo: "https://randomuser.me/api/portraits/men/75.jpg",
+      totalProductsSold: 175,
+      salesDistribution: { "Credit Card": 80, "Debit Card": 30, "Savings Account": 40, "Demat Account": 25 },
+      customersTargeted: 220,
+      ageGroupDistribution: { "18-25": 50, "26-35": 60, "36-45": 40, "46+": 25 },
+      regionDistribution: { "North": 60, "South": 45, "East": 35, "West": 35 }
+    };
+
+    sellers.sort((a, b) => b.totalProductsSold - a.totalProductsSold);
+
+    // Chart.js global colors
+    Chart.defaults.color = "#484f52";
+    Chart.defaults.font.family = "'Segoe UI', Arial, sans-serif";
+
+    // Render Aayush's profile charts
+    function renderAayushProfile() {
+      document.getElementById("aayush-total").textContent = aayush.totalProductsSold;
+      document.getElementById("aayush-customers").textContent = aayush.customersTargeted;
+      // Product Distribution
+      new Chart(document.getElementById('aayush-product-chart'), {
+        type: 'doughnut',
+        data: {
+          labels: productTypes,
+          datasets: [{
+            data: productTypes.map(p => aayush.salesDistribution[p]),
+            backgroundColor: ['#69aabf', '#5ead57', '#ebeff0', '#484f52']
+          }]
+        },
+        options: { plugins: { legend: { display: false } }, cutout: '65%' }
+      });
+      // Age Group (wide bar)
+      new Chart(document.getElementById('aayush-age-chart'), {
+        type: 'bar',
+        data: {
+          labels: ageGroups,
+          datasets: [{
+            data: ageGroups.map(a => aayush.ageGroupDistribution[a]),
+            backgroundColor: '#69aabf',
+            borderRadius: 8,
+            barThickness: 40
+          }]
+        },
+        options: {
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { display: false } },
+            y: { beginAtZero: true, grid: { color: "#ebeff0" } }
+          }
+        }
+      });
+      // Region
+      new Chart(document.getElementById('aayush-region-chart'), {
+        type: 'doughnut',
+        data: {
+          labels: regions,
+          datasets: [{
+            data: regions.map(r => aayush.regionDistribution[r]),
+            backgroundColor: ['#69aabf', '#5ead57', '#ebeff0', '#484f52']
+          }]
+        },
+        options: { plugins: { legend: { display: false } }, cutout: '65%' }
+      });
+    }
+
+    // Render sellers table
+    function renderSellersTable() {
+      const tbody = document.querySelector("#sellers-table tbody");
+      sellers.forEach((seller, idx) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${idx + 1}</td>
+                        <td><span class="seller-name" data-seller="${idx}">${seller.name}</span></td>
+                        <td>${seller.totalProductsSold}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Modal logic for seller profiles
+    let modalProductChart, modalAgeChart, modalRegionChart;
+    function setupSellerModals() {
+      document.querySelectorAll('.seller-name').forEach(el => {
+        el.addEventListener('click', function (e) {
+          const idx = parseInt(el.getAttribute('data-seller'));
+          showSellerModal(sellers[idx]);
+        });
+      });
+    }
+
+    function showSellerModal(seller) {
+      document.getElementById('sellerModalLabel').textContent = seller.name + "'s Profile";
+      document.getElementById('modal-profile-photo').src = seller.photo;
+      document.getElementById('modal-total').textContent = seller.totalProductsSold;
+      document.getElementById('modal-customers').textContent = seller.customersTargeted;
+      renderStars('modal-rating-stars', seller.averageRating);
+
+      // Destroy old charts if they exist
+      if (modalProductChart) modalProductChart.destroy();
+      if (modalAgeChart) modalAgeChart.destroy();
+      if (modalRegionChart) modalRegionChart.destroy();
+
+      // Product Distribution
+      modalProductChart = new Chart(document.getElementById('modal-product-chart'), {
+        type: 'doughnut',
+        data: {
+          labels: productTypes,
+          datasets: [{
+            data: productTypes.map(p => seller.salesDistribution[p]),
+            backgroundColor: ['#69aabf', '#5ead57', '#ebeff0', '#484f52']
+          }]
+        },
+        options: { plugins: { legend: { display: false } }, cutout: '65%' }
+      });
+
+      // Age Group (wide bar)
+      modalAgeChart = new Chart(document.getElementById('modal-age-chart'), {
+        type: 'bar',
+        data: {
+          labels: ageGroups,
+          datasets: [{
+            data: ageGroups.map(a => seller.ageGroupDistribution[a]),
+            backgroundColor: '#69aabf',
+            borderRadius: 8,
+            barThickness: 40
+          }]
+        },
+        options: {
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { display: false } },
+            y: { beginAtZero: true, grid: { color: "#ebeff0" } }
+          }
+        }
+      });
+
+      // Region
+      modalRegionChart = new Chart(document.getElementById('modal-region-chart'), {
+        type: 'doughnut',
+        data: {
+          labels: regions,
+          datasets: [{
+            data: regions.map(r => seller.regionDistribution[r]),
+            backgroundColor: ['#69aabf', '#5ead57', '#ebeff0', '#484f52']
+          }]
+        },
+        options: { plugins: { legend: { display: false } }, cutout: '65%' }
+      });
+
+      // Show modal
+      const modal = new bootstrap.Modal(document.getElementById('sellerModal'));
+      modal.show();
+    }
+
+    // On page load
+    window.onload = function () {
+      renderAayushProfile();
+      renderSellersTable();
+      setupSellerModals();
+    };
+    // Sample contacts for each KPI
+    const interestedNames = [
+  "Amit Sharma", "Priya Singh", "Rahul Verma", "Neha Patel", "Vikram Joshi",
+  "Sneha Gupta", "Rohit Mehra", "Anjali Das", "Suresh Reddy", "Kavita Nair",
+  "Deepak Kumar", "Pooja Bansal", "Arjun Rao", "Meena Iyer", "Siddharth Jain",
+  "Ritu Kapoor", "Manish Agarwal", "Shalini Mishra", "Karan Malhotra", "Swati Chawla"
+];
+const notInterestedNames = [
+  "Gaurav Saxena", "Sunita Yadav", "Nikhil Sinha", "Komal Bhatt", "Harish Pillai",
+  "Divya Menon", "Ajay Chauhan", "Vidya Kulkarni", "Sameer Khan", "Lakshmi Raju"
+];
+const neutralNames = [
+  "Tarun Sethi", "Bhavna Shah", "Sanjay Dubey"
+];
+
+// Function to generate contacts with names
+function makeContacts(namesArr, count, prefix) {
+  const contacts = [];
+  for (let i = 0; i < count; i++) {
+    const name = namesArr[i % namesArr.length];
+    contacts.push({
+      name: name,
+      contact: `+91-${prefix}${(10000 + i).toString().padStart(5, "0")}`
+    });
+  }
+  return contacts;
+}
+
+const kpiContacts = {
+  interested: makeContacts(interestedNames, 30, "900"),
+  not_interested: makeContacts(notInterestedNames, 17, "800"),
+  neutral: makeContacts(neutralNames, 3, "700")
+};
+
+// Handle KPI click
+document.addEventListener("DOMContentLoaded", function() {
+  document.querySelectorAll('.kpi-card').forEach(card => {
+    card.addEventListener('click', function() {
+      const kpi = card.getAttribute('data-kpi');
+      let title = "";
+      if (kpi === "interested") title = "Interested Clients";
+      else if (kpi === "not_interested") title = "Not Interested Clients";
+      else if (kpi === "neutral") title = "Neutral Clients";
+      document.getElementById('kpiModalLabel').textContent = title;
+
+      // Build table of contacts
+      let html = '<table class="table table-sm"><thead><tr><th>Name</th><th>Contact</th></tr></thead><tbody>';
+      kpiContacts[kpi].forEach(c => {
+        html += `<tr><td>${c.name}</td><td>${c.contact}</td></tr>`;
+      });
+      html += '</tbody></table>';
+      document.getElementById('kpiModalBody').innerHTML = html;
+
+      // Show modal
+      const modal = new bootstrap.Modal(document.getElementById('kpiModal'));
+      modal.show();
+    });
+  });
+});
+
+  </script>
+</body>
+</html>
